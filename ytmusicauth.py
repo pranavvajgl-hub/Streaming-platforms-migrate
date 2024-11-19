@@ -8,13 +8,12 @@ CLIENT_SECRETS_FILE = 'credentials.json'
 
 def get_authenticated_service():
     """
-    Funkce pro přihlášení k YouTube Music API pomocí OAuth2.
+    Log in to YouTube and return an authorized service object.
     """
 
     flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, SCOPES)
     credentials = flow.run_local_server(host='localhost',
-
                                        port=8080,
                                        authorization_prompt_message='Please visit this URL: {url}',
                                        success_message='The auth flow is complete; you may close this window.',
