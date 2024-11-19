@@ -1,15 +1,8 @@
 import os
 from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyOAuth
-from spotipy.oauth2 import SpotifyClientCredentials
 import spotipy
-import json
-import sys
-from typing import Any
 from song import Song
-
-from symtable import Class
-import requests
 
 load_dotenv()
 
@@ -24,7 +17,7 @@ class Spotify:
         self.spotify_client_secret = client_secret
         self.spotify_redirect_uri = redirect_uri
         self.spotify_scope = scope
-        self.sp: spotipy.Spotify = None
+        self.sp: spotipy.Spotify
         # self.content: list[Song] = []
         # self.content_name = lambda x: f".spotify_{x}.json"
 
