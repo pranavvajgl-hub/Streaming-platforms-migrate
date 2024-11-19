@@ -19,7 +19,7 @@ spotify_client = Spotify(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, SCOPE)
 sp = spotify_client.login()
 spotify_playlists = spotify_client.get_playlists()
 
-# SIGN INTO YTMUSIC
+# SIGN IN TO YTMUSIC
 youtube = ytmusicauth.get_authenticated_service()
 youtube_playlists = youtube.playlists().list(part="snippet", mine=True).execute()
 
@@ -27,12 +27,18 @@ youtube_playlists = youtube.playlists().list(part="snippet", mine=True).execute(
 for spotify_playlist in spotify_playlists:
     for youtube_playlist in youtube_playlists['items']:
         if spotify_playlist['name'] == youtube_playlist['snippet']['title']:
-            spotify_tracks = spotify_client.get_playlist_tracks(spotify_playlist['id'])
 
+            '''
+            Here we are getting list of tracks on both platforms
+            '''
+            spotify_tracks = spotify_client.get_playlist_tracks(spotify_playlist['id'])
             youtube_tracks = youtube.playlistItems().list(
                 part="snippet", playlistId=youtube_playlist['id'], maxResults=100
             ).execute()
 
+            '''
+            Comparison magic
+            '''
             for spotify_track in spotify_tracks['items']:
                 spotify_track.get_youtube_id(youtube)
                 found = False
@@ -56,4 +62,3 @@ for spotify_playlist in spotify_playlists:
                             }
                         )
                         response = request.execute()
-                        print(f"Pridana skladba {spotify_track.title} do playlistu {youtube_playlist['snippet']['title']}")
