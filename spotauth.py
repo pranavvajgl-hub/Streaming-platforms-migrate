@@ -2,6 +2,8 @@ import os
 from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyOAuth
 import spotipy
+
+import ytmusicauth
 from song import Song
 
 load_dotenv()
@@ -43,9 +45,10 @@ class Spotify:
             })
         return tracks
 
+
     def get_playlists(self):
         playlists = self.sp.current_user_playlists()
-        print("Playlisty:",playlists)
+        print("Playlists:",playlists)
         return [{'name': playlist['name'], 'id': playlist['id']} for playlist in playlists['items']]
 
     def get_playlist_tracks(self, playlist_id):
