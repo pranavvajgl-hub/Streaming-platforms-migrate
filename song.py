@@ -14,7 +14,7 @@ class Song:
 
     def get_youtube_id(self, youtube):
         """
-        Only for YouTube Music. Searches for youtube ID.
+        Only for YouTube Music. THis searches for YouTube ID.
         """
         request = youtube.search().list(
             part='snippet',
