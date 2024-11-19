@@ -18,6 +18,7 @@ class Spotify:
         self.spotify_redirect_uri = redirect_uri
         self.spotify_scope = scope
         self.sp: spotipy.Spotify
+        self.sp = None
         # self.content: list[Song] = []
         # self.content_name = lambda x: f".spotify_{x}.json"
 
@@ -44,13 +45,13 @@ class Spotify:
 
     def get_playlists(self):
         playlists = self.sp.current_user_playlists()
-        print("Plailisty:",playlists)
+        print("Playlisty:",playlists)
         return [{'name': playlist['name'], 'id': playlist['id']} for playlist in playlists['items']]
 
     def get_playlist_tracks(self, playlist_id):
         results = self.sp.playlist_tracks(playlist_id)
         tracks = []
-        for item in results['items']:
+        for item in results.items:
             track = item['track']
             tracks.append(Song(
                 title=track['name'],
