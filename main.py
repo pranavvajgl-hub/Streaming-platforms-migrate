@@ -19,7 +19,7 @@ spotify_client = Spotify(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, SCOPE)
 sp = spotify_client.login()
 spotify_playlists = spotify_client.get_playlists()
 
-# SIGN IN TO YTMUSIC
+# SIGN IN TO YOUTUBE MUSIC
 youtube = ytmusicauth.get_authenticated_service()
 youtube_playlists = youtube.playlists().list(part="snippet", mine=True).execute()
 
