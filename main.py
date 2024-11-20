@@ -4,9 +4,6 @@ from urllib.error import HTTPError
 import time
 import spotipy
 from dotenv import load_dotenv
-from spotipy.oauth2 import SpotifyOAuth
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
 from spotauth import Spotify
 from ytmusicauth import YouTubeMusic
 
