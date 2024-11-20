@@ -5,17 +5,25 @@ import spotipy
 
 load_dotenv()
 
-# Konfigurace Spotify API
 SPOTIFY_CLIENT_ID = os.getenv('CLIENT_ID')
 SPOTIFY_CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 SPOTIFY_REDIRECT_URI = os.getenv('REDIRECT_URI')
 SCOPE = os.getenv('SCOPE')
-API_KEY = os.getenv('API_KEY')
 
-def spotify_initialization(client_id, client_secret, redirect_uri, scope):
-    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id,
-                                                   client_secret=client_secret,
-                                                   redirect_uri=redirect_uri,
-                                                   scope=scope))
+class Spotify:
+    def __init__(self, client_id, client_secret, redirect_uri, scope):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.redirect_uri = redirect_uri
+        self.scope = scope
+        self.sp = self.spotify_initialization()
 
-    return sp
+    def spotify_initialization(self):
+        """
+        Initialize Spotify API and returns object for API access
+        """
+        sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=self.client_id,
+                                                       client_secret=self.client_secret,
+                                                       redirect_uri=self.redirect_uri,
+                                                       scope=self.scope))
+        return sp
