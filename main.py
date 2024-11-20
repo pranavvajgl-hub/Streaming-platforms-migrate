@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 from spotipy.oauth2 import SpotifyOAuth
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
-import spotauth
-import ytmusicauth
+from spotauth import Spotify
+from ytmusicauth import YouTubeMusic
 
 load_dotenv()
 
@@ -25,11 +25,12 @@ SCOPES = ['https://www.googleapis.com/auth/youtube']
 API_KEY = os.getenv('API_KEY')
 
 # Initiaize Spotify API
-sp = spotauth.spotify_initialization(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, SCOPE)
-
+spotify = Spotify(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, SCOPE)
+sp = spotify.sp
 
 # Initiaize YouTube API
-youtube = ytmusicauth.get_authenticated_service(CLIENT_SECRETS_FILE, SCOPES, YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION)
+youtube_music = YouTubeMusic(CLIENT_SECRETS_FILE, SCOPES, YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION)
+youtube = youtube_music.youtube
 
 # Načtení stavu
 if os.path.exists("progress.json"):
