@@ -6,7 +6,6 @@ YOUTUBE_API_SERVICE_NAME = 'youtube'
 YOUTUBE_API_VERSION = 'v3'
 CLIENT_SECRETS_FILE = 'credentials.json'
 SCOPES = ['https://www.googleapis.com/auth/youtube']
-API_KEY = os.getenv('API_KEY')
 
 class YouTubeMusic:
     def __init__(self, client_secrets_file, scopes, youtube_api_service_name, youtube_api_version):
