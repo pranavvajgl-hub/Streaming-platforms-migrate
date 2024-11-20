@@ -1,67 +1,140 @@
-import os
-from dotenv import load_dotenv
-import ytmusicauth
-import spotauth
-from spotauth import Spotify, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, SCOPE
-from spotipy.oauth2 import SpotifyOAuth
-from spotipy.oauth2 import SpotifyClientCredentials
-import spotipy
 import json
-import sys
-from typing import Any
-from song import Song
+import os
+from urllib.error import HTTPError
+import time
+import spotipy
+from dotenv import load_dotenv
+from spotipy.oauth2 import SpotifyOAuth
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
 
-from symtable import Class
-import requests
+load_dotenv()
 
-def compare_playlists(spotify_client, youtube_client, spotify_playlists, youtube_playlists):
-    """
-    Compares and syncs playlists from Spotify and YouTube
-    """
-    for spotify_playlist in spotify_playlists:
-        for youtube_playlist in youtube_playlists['items']:
-            if spotify_playlist['name'] == youtube_playlist['snippet']['title']:
-                compare_tracks(spotify_client, youtube_client, spotify_playlist, youtube_playlist)
+# Konfigurace Spotify API
+SPOTIPY_CLIENT_ID = os.getenv('CLIENT_ID')
+SPOTIPY_CLIENT_SECRET = os.getenv('CLIENT_SECRET')
+SPOTIPY_REDIRECT_URI = os.getenv('REDIRECT_URI')
+SCOPE = os.getenv('SCOPE')
+API_KEY = os.getenv('API_KEY')
 
-def compare_tracks(spotify_client, youtube_client, spotify_playlist, youtube_playlist):
-    """
-    Compares tracks in searched playlists on both platforms
-    """
-    spotify_tracks = spotify_client.get_playlist_tracks(spotify_playlist['id'])
-    youtube_tracks = youtube_client.playlistItems().list(
-        part="snippet",playlistId=youtube_playlist['id'], maxResults=100
-    ).execute()
-    for spotify_track in spotify_tracks['items']:
-        spotify_track.get_youtube_id(youtube_client)
-        found = False
-        for youtube_track in youtube_tracks['items']:
-            if spotify_track.youtube_id == youtube_track['snippet']['resourceId']['videoId']:
-                found = True
-                break
-        if not found:
-            request = youtube_client.playlistItems().insert(
-                part="snippet",
+# Konfigurace YouTube API
+YOUTUBE_API_SERVICE_NAME = 'youtube'
+YOUTUBE_API_VERSION = 'v3'
+CLIENT_SECRETS_FILE = 'credentials.json'
+SCOPES = ['https://www.googleapis.com/auth/youtube']
+
+# Inicializace Spotify API
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=SPOTIPY_CLIENT_ID,
+                                               client_secret=SPOTIPY_CLIENT_SECRET,
+                                               redirect_uri=SPOTIPY_REDIRECT_URI,
+                                               scope=SCOPE))
+
+
+
+
+# Inicializace YouTube API
+flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, SCOPES)
+credentials = flow.run_local_server(port=0)
+youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, credentials=credentials)
+
+# Načtení stavu
+if os.path.exists("progress.json"):
+    with open("progress.json", "r") as f:
+        progress = json.load(f)
+else:
+    progress = {}
+
+try:
+    playlists = sp.current_user_playlists()
+except spotipy.SpotifyException as e:
+    print(f"Chyba Spotify API: {e}")
+    exit()
+
+# Pro každý playlist:
+for playlist in playlists['items']:
+    try:
+        playlist_title = playlist['name']
+
+        # Kontrola existence alba
+        if playlist_title in progress:
+            playlist_id = progress[playlist_title]["id"]
+            last_track_index = progress[playlist_title]["last_track_index"]
+            print(f"Album '{playlist_title}' již existuje. Pokračování od indexu {last_track_index}.")
+        else:
+            # Vytvoření nového alba
+            time.sleep(1)
+            playlist_response = youtube.playlists().insert(
+                part="snippet,status",
                 body={
                     "snippet": {
-                        "playlistId": youtube_playlist['id'],
-                        "resourceId": {
-                            "kind": "youtube#video",
-                            "videoId": spotify_track.video_id
-                        }
+                        "title": playlist_title,
+                        "description": f"Playlist převedený ze Spotify",
+                    },
+                    "status": {
+                        "privacyStatus": "private"
                     }
                 }
-            )
-            response = request.execute()
+            ).execute()
 
+            playlist_id = playlist_response['id']
+            print(f"Vytvořen playlist na YouTube: {playlist_title} ({playlist_id})")
+            last_track_index = 0
+            progress[playlist_title] = {"id": playlist_id, "last_track_index": last_track_index}
 
+        tracks = sp.playlist_tracks(playlist['id'])
+        for i, track in enumerate(tracks['items']):
+            if i < last_track_index:
+                continue  # Přeskočení již přidaných skladeb
 
-# SING INTO SPOTIFY
-spotify_client = Spotify(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, SCOPE)
-sp = spotify_client.login()
-spotify_playlists = spotify_client.get_playlists()
+            try:
+                # Získání informací o skladbě
+                track_name = track['track']['name']
+                artist_name = track['track']['artists'][0]['name']
+                search_query = f"{track_name} - {artist_name}"
 
-# SIGN IN TO YOUTUBE MUSIC
-youtube_client = ytmusicauth.get_authenticated_service()
-youtube_playlists = youtube_client.playlists().list(part="snippet", mine=True).execute()
+                # Vyhledání skladby na YouTube Music
+                search_response = youtube.search().list(
+                    q=search_query,
+                    part='id,snippet',
+                    type='video',
+                    maxResults=1,
+                    key=API_KEY
+                ).execute()
 
-compare_playlists(spotify_client, youtube_client, spotify_playlists, youtube_playlists)
+                # Zpracování výsledku vyhledávání
+                if search_response['items']:
+                    video_id = search_response['items'][0]['id']['videoId']
+                    print(f"Nalezena skladba na YouTube: {search_query} ({video_id})")
+
+                    # Přidání skladby do playlistu na YouTube Music
+                    playlist_item_response = youtube.playlistItems().insert(
+                        part="snippet",
+                        body={
+                            "snippet": {
+                                "playlistId": playlist_id,
+                                "resourceId": {
+                                    "kind": "youtube#video",
+                                    "videoId": video_id
+                                }
+                            }
+                        }
+                    ).execute()
+
+                    print(f"Skladba přidána do playlistu: {track_name}")
+
+                    # Aktualizace stavu
+                    progress[playlist_title]["last_track_index"] = i + 1
+                    with open("progress.json", "w") as f:
+                        json.dump(progress, f)
+                else:
+                    print(f"Skladba nenalezena na YouTube: {search_query}")
+
+            except HTTPError as e:
+                print(f"Chyba YouTube API: {e}")
+            except spotipy.SpotifyException as e:
+                print(f"Chyba Spotify API: {e}")
+
+    except HTTPError as e:
+        print(f"Chyba YouTube API: {e}")
+    except spotipy.SpotifyException as e:
+        print(f"Chyba Spotify API: {e}")
