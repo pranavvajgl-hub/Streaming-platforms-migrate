@@ -40,11 +40,8 @@ youtube = youtube_music.youtube
 # Loading the state of last usage
 progress = last_trace()
 
-try:
-    playlists = sp.current_user_playlists()
-except spotipy.SpotifyException as e:
-    print(f"Error with Spotify API: {e}")
-    exit()
+# Load playlists
+playlists = spotify.get_playlists()
 
 # In every playlist
 for playlist in playlists['items']:

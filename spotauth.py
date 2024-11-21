@@ -27,3 +27,10 @@ class Spotify:
                                                        redirect_uri=self.redirect_uri,
                                                        scope=self.scope))
         return sp
+
+    def get_playlists(self):
+        try:
+            playlists = self.sp.current_user_playlists()
+        except spotipy.SpotifyException as e:
+            print(f"Error with Spotify API: {e}")
+            exit()
