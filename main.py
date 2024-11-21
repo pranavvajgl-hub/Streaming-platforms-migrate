@@ -7,6 +7,14 @@ from dotenv import load_dotenv
 from spotauth import Spotify
 from ytmusicauth import YouTubeMusic
 
+def last_trace(filename="progress.json"):
+    try:
+        with open(filename, "r") as f:
+            progress = json.load(f)
+    except FileNotFoundError:
+        progress = {}
+    return progress
+
 load_dotenv()
 
 SPOTIFY_CLIENT_ID = os.getenv('CLIENT_ID')
@@ -29,31 +37,26 @@ sp = spotify.sp
 youtube_music = YouTubeMusic(CLIENT_SECRETS_FILE, SCOPES, YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION)
 youtube = youtube_music.youtube
 
-# Načtení stavu
-if os.path.exists("progress.json"):
-    with open("progress.json", "r") as f:
-        progress = json.load(f)
-else:
-    progress = {}
+# Loading the state of last usage
+progress = last_trace()
 
 try:
     playlists = sp.current_user_playlists()
 except spotipy.SpotifyException as e:
-    print(f"Chyba Spotify API: {e}")
+    print(f"Error with Spotify API: {e}")
     exit()
 
-# Pro každý playlist:
+# In every playlist
 for playlist in playlists['items']:
     try:
+        # See if the album does exist
         playlist_title = playlist['name']
-
-        # Kontrola existence alba
         if playlist_title in progress:
             playlist_id = progress[playlist_title]["id"]
             last_track_index = progress[playlist_title]["last_track_index"]
             print(f"Album '{playlist_title}' již existuje. Pokračování od indexu {last_track_index}.")
         else:
-            # Vytvoření nového alba
+            # Creating a new album
             time.sleep(1)
             playlist_response = youtube.playlists().insert(
                 part="snippet,status",
@@ -65,7 +68,8 @@ for playlist in playlists['items']:
                     "status": {
                         "privacyStatus": "private"
                     }
-                }
+                },
+                key=API_KEY
             ).execute()
 
             playlist_id = playlist_response['id']
@@ -73,32 +77,49 @@ for playlist in playlists['items']:
             last_track_index = 0
             progress[playlist_title] = {"id": playlist_id, "last_track_index": last_track_index}
 
+
         tracks = sp.playlist_tracks(playlist['id'])
+        search_cache = {}
+
         for i, track in enumerate(tracks['items']):
+            search_response = None
+            search_query = None
+            track_name = None
+
+            # Skip last track
             if i < last_track_index:
-                continue  # Přeskočení již přidaných skladeb
-
+                continue
             try:
-                # Získání informací o skladbě
-                track_name = track['track']['name']
-                artist_name = track['track']['artists'][0]['name']
-                search_query = f"{track_name} - {artist_name}"
-
-                # Vyhledání skladby na YouTube Music
-                search_response = youtube.search().list(
-                    q=search_query,
-                    part='id,snippet',
-                    type='video',
-                    maxResults=1,
-                    key=API_KEY
-                ).execute()
-
+                try:
+                    # Track info on spotify
+                    track_name = track['track']['name']
+                    artist_name = track['track']['artists'][0]['name']
+                    search_query = f"{track_name} - {artist_name}"
+                    # Search on YTMusic
+                    if search_query in search_cache:
+                        search_response = search_cache[search_query]
+                        print(f"Result from search is form cache: {search_query}")
+                    else:
+                        search_response = youtube.search().list(
+                            q=search_query,
+                            part='id,snippet',
+                            type='video',
+                            maxResults=1,
+                            key=API_KEY
+                        ).execute()
+                        search_cache[search_query] = search_response
+                except HTTPError as e:
+                    if "quotaExceeded" in str(e):
+                        print("You have exceeded your quota for searching.")
+                    else:
+                        print(f"Error with YouTube API: {e}")
+                        raise
                 # Zpracování výsledku vyhledávání
                 if search_response['items']:
                     video_id = search_response['items'][0]['id']['videoId']
                     print(f"Nalezena skladba na YouTube: {search_query} ({video_id})")
 
-                    # Přidání skladby do playlistu na YouTube Music
+                    # Adding song into playlist
                     playlist_item_response = youtube.playlistItems().insert(
                         part="snippet",
                         body={
@@ -109,24 +130,19 @@ for playlist in playlists['items']:
                                     "videoId": video_id
                                 }
                             }
-                        }
+                        },
+                        key=API_KEY
                     ).execute()
-
+                    youtube_music.update_progress(progress, playlist_title, i)
                     print(f"Skladba přidána do playlistu: {track_name}")
-
-                    # Aktualizace stavu
-                    progress[playlist_title]["last_track_index"] = i + 1
-                    with open("progress.json", "w") as f:
-                        json.dump(progress, f)
                 else:
                     print(f"Skladba nenalezena na YouTube: {search_query}")
 
             except HTTPError as e:
-                print(f"Chyba YouTube API: {e}")
+                print(f"Error with YouTube API: {e}")
             except spotipy.SpotifyException as e:
-                print(f"Chyba Spotify API: {e}")
-
+                print(f"Error with Spotify API: {e}")
     except HTTPError as e:
-        print(f"Chyba YouTube API: {e}")
+        print(f"Error with YouTube API: {e}")
     except spotipy.SpotifyException as e:
-        print(f"Chyba Spotify API: {e}")
+        print(f"Error with Spotify API: {e}")
