@@ -10,10 +10,10 @@ from ytmusicauth import YouTubeMusic
 def last_trace(filename="progress.json"):
     try:
         with open(filename, "r") as f:
-            progress = json.load(f)
+            loaded_progress = json.load(f)
     except FileNotFoundError:
-        progress = {}
-    return progress
+        loaded_progress = {}
+    return loaded_progress
 
 load_dotenv()
 
