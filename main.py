@@ -21,6 +21,7 @@ def save_progress(progress, filename="progress.json"):
 
 load_dotenv()
 
+# Config for Spotify API
 SPOTIFY_CLIENT_ID = os.getenv('CLIENT_ID')
 SPOTIFY_CLIENT_SECRET = os.getenv('CLIENT_SECRET')
 SPOTIFY_REDIRECT_URI = os.getenv('REDIRECT_URI')
@@ -41,23 +42,23 @@ sp = spotify.sp
 youtube_music = YouTubeMusic(CLIENT_SECRETS_FILE, SCOPES, YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION)
 youtube = youtube_music.youtube
 
-# Loading the state of last usage
+# State of previously added songs/albums
 progress = get_last_progress()
 
-# Load playlists
+# Loading Spotify playlists:
 playlists = spotify.get_playlists()
 
 # In every playlist
 for playlist in playlists['items']:
     try:
-        # See if the album does exist
+        # See if the album does exist in Spotify
         playlist_title = playlist['name']
         if playlist_title in progress:
             playlist_id = progress[playlist_title]["id"]
             last_track_index = progress[playlist_title]["last_track_index"]
             print(f"Playlist '{playlist_title}' does exist. Continue with index {last_track_index}.")
         else:
-            # Creating a new album
+            # Creating a new album on YT Music
             time.sleep(1)
             playlist_response = youtube.playlists().insert(
                 part="snippet,status",
@@ -72,16 +73,14 @@ for playlist in playlists['items']:
                 },
                 key=API_KEY
             ).execute()
-
             playlist_id = playlist_response['id']
             print(f"Playlist created on YouTube: {playlist_title} ({playlist_id})")
             last_track_index = 0
             progress[playlist_title] = {"id": playlist_id, "last_track_index": last_track_index}
 
-
+        # Initialization of tracks in playlist
         tracks = sp.playlist_tracks(playlist['id'])
         search_cache = {}
-
         for i, track in enumerate(tracks['items']):
             search_response = None
             search_query = None
