@@ -54,7 +54,7 @@ for playlist in playlists['items']:
         if playlist_title in progress:
             playlist_id = progress[playlist_title]["id"]
             last_track_index = progress[playlist_title]["last_track_index"]
-            print(f"Album '{playlist_title}' již existuje. Pokračování od indexu {last_track_index}.")
+            print(f"Playlist '{playlist_title}' does exist. Continue with index {last_track_index}.")
         else:
             # Creating a new album
             time.sleep(1)
@@ -63,7 +63,7 @@ for playlist in playlists['items']:
                 body={
                     "snippet": {
                         "title": playlist_title,
-                        "description": f"Playlist převedený ze Spotify",
+                        "description": f"Playlist form Spotify",
                     },
                     "status": {
                         "privacyStatus": "private"
@@ -73,7 +73,7 @@ for playlist in playlists['items']:
             ).execute()
 
             playlist_id = playlist_response['id']
-            print(f"Vytvořen playlist na YouTube: {playlist_title} ({playlist_id})")
+            print(f"Playlist created on YouTube: {playlist_title} ({playlist_id})")
             last_track_index = 0
             progress[playlist_title] = {"id": playlist_id, "last_track_index": last_track_index}
 
@@ -114,10 +114,11 @@ for playlist in playlists['items']:
                     else:
                         print(f"Error with YouTube API: {e}")
                         raise
-                # Zpracování výsledku vyhledávání
+
+                # Adding playlist into YTMusic found on Spotify
                 if search_response['items']:
                     video_id = search_response['items'][0]['id']['videoId']
-                    print(f"Nalezena skladba na YouTube: {search_query} ({video_id})")
+                    print(f"Track found on YouTube: {search_query} ({video_id})")
 
                     # Adding song into playlist
                     playlist_item_response = youtube.playlistItems().insert(
@@ -134,9 +135,9 @@ for playlist in playlists['items']:
                         key=API_KEY
                     ).execute()
                     youtube_music.update_progress(progress, playlist_title, i)
-                    print(f"Skladba přidána do playlistu: {track_name}")
+                    print(f"Track: {track_name} added into playlist {playlist_id}")
                 else:
-                    print(f"Skladba nenalezena na YouTube: {search_query}")
+                    print(f"Track found on YouTube: {search_query}")
 
             except HTTPError as e:
                 print(f"Error with YouTube API: {e}")
