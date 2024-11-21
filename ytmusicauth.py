@@ -23,9 +23,3 @@ class YouTubeMusic:
         credentials = flow.run_local_server(port=0)
         youtube = build(self.youtube_api_service_name, self.youtube_api_version, credentials=credentials)
         return youtube
-
-    @staticmethod
-    def update_progress(progress, playlist_title, i):
-        progress[playlist_title]["last-track_index"] = i + 1
-        with open("progress.json", "w") as f:
-            json.dump(progress, f)

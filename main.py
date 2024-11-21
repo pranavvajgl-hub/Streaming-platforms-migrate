@@ -7,13 +7,17 @@ from dotenv import load_dotenv
 from spotauth import Spotify
 from ytmusicauth import YouTubeMusic
 
-def last_trace(filename="progress.json"):
+def get_last_progress(filename="progress.json"):
     try:
         with open(filename, "r") as f:
             loaded_progress = json.load(f)
     except FileNotFoundError:
         loaded_progress = {}
     return loaded_progress
+
+def save_progress(progress, filename="progress.json"):
+    with open("progress.json", "w") as f:
+        json.dump(progress, f)
 
 load_dotenv()
 
@@ -38,7 +42,7 @@ youtube_music = YouTubeMusic(CLIENT_SECRETS_FILE, SCOPES, YOUTUBE_API_SERVICE_NA
 youtube = youtube_music.youtube
 
 # Loading the state of last usage
-progress = last_trace()
+progress = get_last_progress()
 
 # Load playlists
 playlists = spotify.get_playlists()
@@ -131,8 +135,11 @@ for playlist in playlists['items']:
                         },
                         key=API_KEY
                     ).execute()
-                    youtube_music.update_progress(progress, playlist_title, i)
                     print(f"Track: {track_name} added into playlist {playlist_id}")
+
+                    # Saving progress
+                    progress[playlist_title]["last_track_index"] = i + 1
+                    save_progress(progress)
                 else:
                     print(f"Track found on YouTube: {search_query}")
 
