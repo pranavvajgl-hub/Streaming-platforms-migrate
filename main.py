@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import logging
 import spotipy
 from urllib.error import HTTPError
 from dotenv import load_dotenv
@@ -20,6 +21,9 @@ def save_progress(progress, filename="progress.json"):
         json.dump(progress, f)
 
 load_dotenv()
+
+logging.basicConfig(filename='sync.log', level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Config for Spotify API
 SPOTIFY_CLIENT_ID = os.getenv('CLIENT_ID')
@@ -57,6 +61,7 @@ for playlist in playlists['items']:
             playlist_id = progress[playlist_title]["id"]
             last_track_index = progress[playlist_title]["last_track_index"]
             print(f"Playlist '{playlist_title}' does exist. Continue with index {last_track_index}.")
+            logging.info(f"Playlist '{playlist_title}' does exist. Continue with index {last_track_index}.")
         else:
             # Creating a new album on YT Music
             time.sleep(1)
@@ -75,8 +80,11 @@ for playlist in playlists['items']:
             ).execute()
             playlist_id = playlist_response['id']
             print(f"Playlist created on YouTube: {playlist_title} ({playlist_id})")
+            logging.info(f"Playlist created on YouTube: {playlist_title} ({playlist_id})")
             last_track_index = 0
             progress[playlist_title] = {"id": playlist_id, "last_track_index": last_track_index}
+            save_progress(progress)
+            logging.info(f"Progress saved on index: {progress[playlist_title]}")
 
         # Initialization of tracks in playlist
         tracks = sp.playlist_tracks(playlist['id'])
@@ -111,8 +119,10 @@ for playlist in playlists['items']:
                 except HTTPError as e:
                     if "quotaExceeded" in str(e):
                         print("You have exceeded your quota for searching.")
+                        logging.info(f"You have exceeded your quota for searching.")
                     else:
                         print(f"Error with YouTube API: {e}")
+                        logging.info(f"Error with YouTube API: {e}")
                         raise
 
                 # Adding playlist into YTMusic found on Spotify
@@ -120,33 +130,61 @@ for playlist in playlists['items']:
                     video_id = search_response['items'][0]['id']['videoId']
                     print(f"Track found on YouTube: {search_query} ({video_id})")
 
-                    # Adding song into playlist
-                    playlist_item_response = youtube.playlistItems().insert(
-                        part="snippet",
-                        body={
-                            "snippet": {
-                                "playlistId": playlist_id,
-                                "resourceId": {
-                                    "kind": "youtube#video",
-                                    "videoId": video_id
-                                }
-                            }
-                        },
-                        key=API_KEY
-                    ).execute()
-                    print(f"Track: {track_name} added into playlist {playlist_id}")
+                    max_retries = 3
+                    retries = 0
+                    while retries < max_retries:
+                        try:
+                            # Adding song into playlist
+                            playlist_item_response = youtube.playlistItems().insert(
+                                part="snippet",
+                                body={
+                                    "snippet": {
+                                        "playlistId": playlist_id,
+                                        "resourceId": {
+                                            "kind": "youtube#video",
+                                            "videoId": video_id
+                                        }
+                                    }
+                                },
+                                key=API_KEY
+                            ).execute()
+                            print(f"Track: {track_name} added into playlist {playlist_id}")
+                            logging.info(f"Track: {track_name} added into playlist {playlist_id}")
+                            # Saving progress
+                            progress[playlist_title]["last_track_index"] = i + 1
+                            save_progress(progress)
 
-                    # Saving progress
-                    progress[playlist_title]["last_track_index"] = i + 1
-                    save_progress(progress)
+                        except HTTPError as e:
+                            if e.resp.status == 409 and "SERVICE_UNAVAILABLE" in str(e):
+                                retries += 1
+                                print(f"Error adding song (attempt {retries}/{max_retries}): {e}")
+                                logging.info(f"Error adding song (attempt {retries}/{max_retries}): {e}")
+                                time.sleep(2)
+                            else:
+                                print(f"Error with YouTube API: {e}")
+                                logging.info(f"Error with YouTube API: {e}")
+                                raise  # Vyvolání výjimky pro ukončení programu
+
+                        break  # Ukončení cyklu while po úspěšném přidání skladby
+
+                    if retries == max_retries:  # Podmínka mimo cyklus while
+                        print(f"Failed to add after {max_retries} retries")
+                        logging.info(f"Failed to add after {max_retries} retries")
+                        # ... (případně zobrazit uživateli zprávu o chybě) ...
                 else:
                     print(f"Track found on YouTube: {search_query}")
+                    logging.info(f"Track found on YouTube: {search_query}")
 
             except HTTPError as e:
                 print(f"Error with YouTube API: {e}")
+                logging.info(f"Error with YouTube API: {e}")
             except spotipy.SpotifyException as e:
                 print(f"Error with Spotify API: {e}")
+                logging.info(f"Error with Spotify API: {e}")
+
     except HTTPError as e:
         print(f"Error with YouTube API: {e}")
+        logging.info(f"Error with YouTube API: {e}")
     except spotipy.SpotifyException as e:
         print(f"Error with Spotify API: {e}")
+        logging.info(f"Error with Spotify API: {e}")
