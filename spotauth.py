@@ -34,3 +34,4 @@ class Spotify:
         except spotipy.SpotifyException as e:
             print(f"Error with Spotify API: {e}")
             exit()
+        return playlists
