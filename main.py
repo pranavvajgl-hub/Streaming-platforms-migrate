@@ -75,12 +75,14 @@ for playlist in playlists['items']:
                     "status": {
                         "privacyStatus": "private"
                     }
-                },
-                key=API_KEY
+                }
+                #key=API_KEY
             ).execute()
             playlist_id = playlist_response['id']
             print(f"Playlist created on YouTube: {playlist_title} ({playlist_id})")
             logging.info(f"Playlist created on YouTube: {playlist_title} ({playlist_id})")
+
+            # Saving progress
             last_track_index = 0
             progress[playlist_title] = {"id": playlist_id, "last_track_index": last_track_index}
             save_progress(progress)
@@ -145,8 +147,8 @@ for playlist in playlists['items']:
                                             "videoId": video_id
                                         }
                                     }
-                                },
-                                key=API_KEY
+                                }
+                                #key=API_KEY
                             ).execute()
                             print(f"Track: {track_name} added into playlist {playlist_id}")
                             logging.info(f"Track: {track_name} added into playlist {playlist_id}")
@@ -163,14 +165,13 @@ for playlist in playlists['items']:
                             else:
                                 print(f"Error with YouTube API: {e}")
                                 logging.info(f"Error with YouTube API: {e}")
-                                raise  # Vyvolání výjimky pro ukončení programu
+                                raise
 
-                        break  # Ukončení cyklu while po úspěšném přidání skladby
+                        break
 
-                    if retries == max_retries:  # Podmínka mimo cyklus while
+                    if retries == max_retries:
                         print(f"Failed to add after {max_retries} retries")
                         logging.info(f"Failed to add after {max_retries} retries")
-                        # ... (případně zobrazit uživateli zprávu o chybě) ...
                 else:
                     print(f"Track found on YouTube: {search_query}")
                     logging.info(f"Track found on YouTube: {search_query}")
