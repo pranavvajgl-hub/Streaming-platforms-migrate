@@ -75,8 +75,8 @@ for playlist in playlists['items']:
                     "status": {
                         "privacyStatus": "private"
                     }
-                }
-                #key=API_KEY
+                },
+                key=API_KEY
             ).execute()
             playlist_id = playlist_response['id']
             print(f"Playlist created on YouTube: {playlist_title} ({playlist_id})")
@@ -147,8 +147,8 @@ for playlist in playlists['items']:
                                             "videoId": video_id
                                         }
                                     }
-                                }
-                                #key=API_KEY
+                                },
+                                key=API_KEY
                             ).execute()
                             print(f"Track: {track_name} added into playlist {playlist_id}")
                             logging.info(f"Track: {track_name} added into playlist {playlist_id}")
