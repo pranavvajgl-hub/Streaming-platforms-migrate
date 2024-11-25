@@ -36,7 +36,9 @@ This script was created due to the difference in playback quality between platfo
     pip install google-api-python-client
     pip install google-auth-oauthlib
 
-5. **Set up Spotify API**
+## Create API communication
+
+1. **Set up Spotify API**
 
 * Sign in to your account on [Spotify Developers](https://developer.spotify.com/).
 * In your dashboard click on Create App and fill up necessary boxes.
@@ -61,7 +63,7 @@ This script was created due to the difference in playback quality between platfo
     REDIRECT_URI='http://localhost:8888/callback'
     SCOPE="user-library-read playlist-read-private playlist-read-collaborative"
 
-6. **Set up YouTube Music API**
+2. **Set up YouTube Music API**
 
 * Sign in to your account on [Google Cloud Console](https://console.cloud.google.com/)
 * Create new project and in section `Library` add `YouTube Data API v3`
@@ -86,7 +88,7 @@ This script was created due to the difference in playback quality between platfo
     ````bash
     python start.py
 
-2. **Follow the on-screen instructions:**
+2. **Sync your accounts:**
 
 * The script will prompt you to authorize access to your Spotify and YouTube Music accounts.
 * Playlists should automatically convert into YT Music
