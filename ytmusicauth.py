@@ -18,7 +18,7 @@ class YouTubeMusic:
         """
         Initialize YouTube API and returns object for API access
         """
-        flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, SCOPES)
+        flow = InstalledAppFlow.from_client_secrets_file(self.client_secrets_file, self.scopes)
         credentials = flow.run_local_server(port=0)
         youtube = build(self.youtube_api_service_name, self.youtube_api_version, credentials=credentials)
         return youtube
