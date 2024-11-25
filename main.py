@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from spotauth import Spotify
 from ytmusicauth import YouTubeMusic
 
+load_dotenv()
+
 def get_last_progress(filename="progress.json"):
     try:
         with open(filename, "r") as f:
@@ -19,8 +21,6 @@ def get_last_progress(filename="progress.json"):
 def save_progress(progress, filename="progress.json"):
     with open("progress.json", "w") as f:
         json.dump(progress, f)
-
-load_dotenv()
 
 logging.basicConfig(filename='sync.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
