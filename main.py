@@ -1,13 +1,15 @@
-import json
 import os
+import json
 import time
+import inspect
 import logging
 import spotipy
-from urllib.error import HTTPError
-from dotenv import load_dotenv
 from spotauth import Spotify
+from dotenv import load_dotenv
+from urllib.error import HTTPError
 from ytmusicauth import YouTubeMusic
 
+load_dotenv()
 
 def get_last_progress(filename="progress.json"):
     try:
@@ -18,10 +20,17 @@ def get_last_progress(filename="progress.json"):
     return loaded_progress
 
 def save_progress(progress, filename="progress.json"):
-    with open("progress.json", "w") as f:
-        json.dump(progress, f)
 
-load_dotenv()
+    caller_frame = inspect.stack()[1]
+    caller_path = os.path.abspath(caller_frame.filename)
+    caller_dir = os.path.dirname(caller_path)
+    if os.path.basename(caller_dir) == "tests":
+        file_path = os.path.join(caller_dir, filename)
+    else:
+        project_dir = os.path.dirname(caller_dir)
+        file_path = os.path.join(project_dir, filename)
+    with open(file_path, "w") as f:
+        json.dump(progress, f)
 
 logging.basicConfig(filename='sync.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -139,7 +148,7 @@ def main():
                         while retries < max_retries:
                             try:
                                 # Adding song into playlist
-                                playlist_item_response = youtube.playlistItems().insert(
+                                youtube.playlistItems().insert(
                                     part="snippet",
                                     body={
                                         "snippet": {
