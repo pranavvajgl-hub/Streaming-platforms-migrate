@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from spotauth import Spotify
 from ytmusicauth import YouTubeMusic
 
+
 def get_last_progress(filename="progress.json"):
     try:
         with open(filename, "r") as f:
