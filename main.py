@@ -48,21 +48,22 @@ CLIENT_SECRETS_FILE = 'credentials.json'
 SCOPES = ['https://www.googleapis.com/auth/youtube']
 API_KEY = os.getenv('API_KEY')
 
-# Initiaize Spotify API
-spotify = Spotify(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, SCOPE)
-sp = spotify.sp
-
-# Initiaize YouTube API
-youtube_music = YouTubeMusic(CLIENT_SECRETS_FILE, SCOPES, YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION)
-youtube = youtube_music.youtube
-
-# State of previously added songs/albums
-progress = get_last_progress()
-
-# Loading Spotify playlists:
-playlists = spotify.get_playlists()
-
 def main():
+
+    # Initiaize Spotify API
+    spotify = Spotify(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI, SCOPE)
+    sp = spotify.sp
+
+    # Initiaize YouTube API
+    youtube_music = YouTubeMusic(CLIENT_SECRETS_FILE, SCOPES, YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION)
+    youtube = youtube_music.youtube
+
+    # State of previously added songs/albums
+    progress = get_last_progress()
+
+    # Loading Spotify playlists:
+    playlists = spotify.get_playlists()
+
     # In every playlist
     for playlist in playlists['items']:
         try:
