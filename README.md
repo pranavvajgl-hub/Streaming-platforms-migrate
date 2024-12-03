@@ -19,7 +19,7 @@ This script was created due to the difference in playback quality between platfo
    
 2. **Create virtual environment**
 
-    ````bash
+    ```bash
    python3 -m venv venv
    source venv/bin/activate
 
@@ -52,14 +52,14 @@ This script was created due to the difference in playback quality between platfo
 * In column "Which API/SDKs are you planning to use?" choose **Web API**
 * After you save the app, you should obtain your `Client ID`, `Client Secret`
 * Create `.env` file and add the following variables:
-    ````bash
-    CLIENT_ID=your_spotify_client_id
-    CLIENT_SECRET=your_spotify_client_secret
-    REDIRECT_URI=your_spotify_redirect_uri
-    SCOPE=your_spotify_scopes
+    ```bash
+    CLIENT_ID='your_spotify_client_id'
+    CLIENT_SECRET='your_spotify_client_secret'
+    REDIRECT_URI='your_spotify_redirect_uri'
+    SCOPE='your_spotify_scopes'
 
 * For `REDIRECT_URI` and for `SCOPE` add these parameters:
-    ````bash
+    ```bash
     REDIRECT_URI='http://localhost:8888/callback'
     SCOPE="user-library-read playlist-read-private playlist-read-collaborative"
 
@@ -68,16 +68,16 @@ This script was created due to the difference in playback quality between platfo
 * Sign in to your account on [Google Cloud Console](https://console.cloud.google.com/)
 * Create new project and in section `Library` add `YouTube Data API v3`
 * In the left tray click on **Credentials**, there in the section **API Keys** create your API key and add it in to the `.env` file
-    ````bash
-    API_KEY=your_api_key
+    ```bash
+    API_KEY='your_api_key'
   
 * In the end your `.env` file should look like this:
-    ````bash
-    CLIENT_ID=your_spotify_client_id
-    CLIENT_SECRET=your_spotify_client_secret
-    REDIRECT_URI=your_spotify_redirect_uri
-    SCOPE=your_spotify_scopes
-    API_KEY=your_api_key
+    ```bash
+    CLIENT_ID='your_spotify_client_id'
+    CLIENT_SECRET='your_spotify_client_secret'
+    REDIRECT_URI='your_spotify_redirect_uri'
+    SCOPE='your_spotify_scopes'
+    API_KEY='your_api_key'
 
 * In **Credentials** choose **OAuth consent screen** and obtain your `credentials.json`. Place this file in to the project repository.
 
@@ -85,7 +85,7 @@ This script was created due to the difference in playback quality between platfo
 
 1. **Run the script:**
 
-    ````bash
+    ```bash
     python start.py
 
 2. **Sync your accounts:**
